@@ -1,0 +1,44 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "app.player": {
+      "name": "player",
+      "schema": "app",
+      "columns": {
+        "player-id": {
+          "name": "player-id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "player-name": {
+          "name": "player-name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "id": "772982bf-1d8a-4e16-aa22-d2b486732000",
+  "prevId": "00000000-0000-0000-0000-000000000000"
+}
