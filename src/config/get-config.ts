@@ -9,6 +9,7 @@ export function getConfig() {
   const load = jiti(dirname, { interopDefault: true });
 
   const loaded = load(process.cwd() + "/ledger.config.ts");
+
   const configToParse = loaded.default ?? loaded;
 
   cachedConfig = configSchema.parse(configToParse);

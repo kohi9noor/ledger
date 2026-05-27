@@ -9,6 +9,8 @@ export class QueueRuntime {
     private readonly queue: BatchQueue,
   ) {}
 
+  private isFlushing = false;
+
   startFlush(): void {
     if (this.timer) return;
 
@@ -33,17 +35,27 @@ export class QueueRuntime {
   }
 
   async flush(): Promise<void> {
-    if (!this.db.connected) {
-      console.error("Database is not connected.");
-      return;
-    }
+    if (this.isFlushing) return;
+    this.isFlushing = true;
+    try {
+      if (!this.db.connected) {
+        console.error("Database is not connected.");
+        this.isFlushing = false;
+        return;
+      }
 
-    const config = this.db.getConfig();
+      const config = this.db.getConfig();
 
-    for (const [table] of this.queue.entries()) {
-      const batch = this.queue.drain(table, config.maxBatchSize);
-      if (batch.length === 0) continue;
-      await this.db.batchInsert(table, batch);
+      for (const [table] of this.queue.entries()) {
+        const batch = this.queue.peak(table, config.maxBatchSize);
+        if (batch.length === 0) continue;
+        await this.db.batchInsert(table, batch);
+        this.queue.commit(table, batch.length);
+      }
+    } catch (error) {
+      console.error("Error during batch insert:", error);
+    } finally {
+      this.isFlushing = false;
     }
   }
 }

@@ -1,7 +1,6 @@
 import type { AnyPgTable } from "drizzle-orm/pg-core";
 import type { InferInsertModel } from "drizzle-orm";
 import { getConfig } from "../config/get-config";
-import type { TaskLevel } from "./types";
 
 export class BatchQueue {
   private queue = new Map<AnyPgTable, InferInsertModel<AnyPgTable>[]>();
@@ -10,8 +9,10 @@ export class BatchQueue {
     return (this.queue.get(table) ?? []) as InferInsertModel<T>[];
   }
 
+  private totalEntries = 0;
+
   size() {
-    return this.queue.size;
+    return this.totalEntries;
   }
 
   add<T extends AnyPgTable>(table: T, data: InferInsertModel<T>): boolean {
@@ -19,17 +20,25 @@ export class BatchQueue {
     existing.push(data);
     this.queue.set(table, existing);
     const shouldFlush = existing.length >= this.config.maxBatchSize;
+    this.totalEntries += 1;
     return shouldFlush;
   }
 
-  drain<T extends AnyPgTable>(table: T, max: number): InferInsertModel<T>[] {
+  commit<T extends AnyPgTable>(table: T, count: number) {
     const existing = this.getExisting(table);
+    return existing.splice(0, count);
+  }
 
-    const batch = existing.splice(0, max);
+  peak<T extends AnyPgTable>(table: T, max: number): InferInsertModel<T>[] {
+    const existing = this.getExisting(table);
+    const batch = existing.slice(0, max);
 
     if (existing.length === 0) {
       this.queue.delete(table);
     }
+
+    this.totalEntries -= batch.length;
+
     return batch;
   }
 
@@ -43,5 +52,6 @@ export class BatchQueue {
 
   clear() {
     this.queue.clear();
+    this.totalEntries = 0;
   }
 }
