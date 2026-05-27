@@ -1,12 +1,17 @@
 import type { AnyPgTable } from "drizzle-orm/pg-core";
 import type { InferInsertModel } from "drizzle-orm";
 import { getConfig } from "../config/get-config";
+import type { TaskLevel } from "./types";
 
 export class BatchQueue {
   private queue = new Map<AnyPgTable, InferInsertModel<AnyPgTable>[]>();
   private config = getConfig();
   private getExisting<T extends AnyPgTable>(table: T): InferInsertModel<T>[] {
     return (this.queue.get(table) ?? []) as InferInsertModel<T>[];
+  }
+
+  size() {
+    return this.queue.size;
   }
 
   add<T extends AnyPgTable>(table: T, data: InferInsertModel<T>): boolean {

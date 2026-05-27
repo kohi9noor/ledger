@@ -21,19 +21,28 @@ export class QueueRuntime {
 
   stopFlush(): void {
     if (!this.timer) return;
-
     clearInterval(this.timer);
     this.timer = null;
   }
 
+  async maybeFlush() {
+    const config = this.db.getConfig();
+    if (this.queue.size() >= config.maxBatchSize) {
+      await this.flush();
+    }
+  }
+
   async flush(): Promise<void> {
+    if (!this.db.connected) {
+      console.error("Database is not connected.");
+      return;
+    }
+
     const config = this.db.getConfig();
 
     for (const [table] of this.queue.entries()) {
       const batch = this.queue.drain(table, config.maxBatchSize);
-
       if (batch.length === 0) continue;
-
       await this.db.batchInsert(table, batch);
     }
   }

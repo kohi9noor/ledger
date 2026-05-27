@@ -17,7 +17,9 @@ export class Postgres {
 
   private _config: Config;
 
-  protected _db: NodePgDatabase<Record<string, never>> | null = null;
+  public connected = false;
+
+  public _db: NodePgDatabase<Record<string, never>> | null = null;
 
   constructor(config: Config) {
     this._config = config;
@@ -37,15 +39,21 @@ export class Postgres {
 
     const db = drizzle(pool);
     this._db = db;
-
+    this.connected = true;
     return db;
   }
 
   async getDb(): Promise<NodePgDatabase<Record<string, never>>> {
-    if (!this._db) {
-      await this.setupDb();
+    try {
+      if (!this._db) {
+        await this.setupDb();
+      }
+      return this._db!;
+    } catch (error) {
+      console.error("Failed to connect to the database:");
+      this.connected = false;
+      throw error;
     }
-    return this._db!;
   }
   registerSchema<
     TName extends string,
