@@ -1,5 +1,6 @@
 import jiti from "jiti";
 import { configSchema } from "./schema";
+
 let cachedConfig: ReturnType<typeof configSchema.parse> | null = null;
 
 export function getConfig() {

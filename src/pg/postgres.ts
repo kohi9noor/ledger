@@ -87,6 +87,6 @@ export class Postgres {
     data: InferInsertModel<T>[],
   ) {
     const db = await this.getDb();
-    return db.insert(table).values(data);
+    return db.insert(table).values(data).onConflictDoNothing();
   }
 }

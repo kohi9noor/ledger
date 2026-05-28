@@ -36,21 +36,37 @@ export class QueueRuntime {
 
   async flush(): Promise<void> {
     if (this.isFlushing) return;
+
     this.isFlushing = true;
+
     try {
       if (!this.db.connected) {
         console.error("Database is not connected.");
-        this.isFlushing = false;
         return;
       }
+
+      const tasks = [];
 
       const config = this.db.getConfig();
 
       for (const [table] of this.queue.entries()) {
-        const batch = this.queue.peak(table, config.maxBatchSize);
+        const batch = this.queue.peek(table, config.maxBatchSize);
         if (batch.length === 0) continue;
-        await this.db.batchInsert(table, batch);
-        this.queue.commit(table, batch.length);
+        tasks.push(
+          (async () => {
+            try {
+              await this.db.batchInsert(table, batch);
+              this.queue.commit(table, batch.length);
+            } catch (error) {
+              console.error(error);
+            }
+          })(),
+        );
+
+        if (tasks.length >= config.maxConcurrentBatches) {
+          await Promise.allSettled(tasks);
+          tasks.length = 0;
+        }
       }
     } catch (error) {
       console.error("Error during batch insert:", error);

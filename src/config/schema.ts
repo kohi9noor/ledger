@@ -11,6 +11,7 @@ export const configSchema = z.object({
   logger: z.custom<pino.LoggerOptions>().optional(),
   maxBatchSize: z.number().optional().default(500),
   flushInterval: z.number().optional().default(2000),
+  maxConcurrentBatches: z.number().optional().default(5),
 });
 
 export type Config = z.infer<typeof configSchema>;
